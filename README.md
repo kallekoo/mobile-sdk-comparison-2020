@@ -1,347 +1,190 @@
-# Mobile App SDK Comparison 2020
+🥕🥕🥕 This is a fork of [pkamppur/mobile-sdk-comparison-2020](https://github.com/pkamppur/mobile-sdk-comparison-2020) with original readme found [here](README-original.md)  🥕🥕🥕
 
-Comparing the developer experience of mobile SDKs offering declarative UI.
+# Elm UI edition
 
-## Contents
+Adding to the declarative UI approach of [these mobile SDKs](https://github.com/pkamppur/mobile-sdk-comparison-2020) with [Elm UI](https://github.com/mdgriffith/elm-ui):
 
-- [What](#what)
-- [Why](#why)
-- [What Is Declarative UI](#what-is-declarative-ui)
-- [The App](#the-app)
-- [Prerequisites for Running The Apps](#prerequisites-for-running-the-apps)
-- [Running The Apps](#running-the-apps)
-- [My Impressions](#my-impressions)
-- [More Complex Things to Try](#more-complex-things-to-try)
-- [Send Feedback](#send-feedback)
+<img src="Elm/elm1.png" width="300"/> | <img src="Elm/elm2.png" width="300"/>
 
-## What
+Pros:
+- 👍 It's not CSS
+- 👍 There is no App Store or Play Store to deal with
 
-This repo contains a simple mobile app written using three different mobile SDKs which have a **declarative UI**:
+Cons:
+- 👎 ... hold on, none
 
-- **[SwiftUI](https://developer.apple.com/xcode/swiftui/)**
-- **[React Native](https://reactnative.dev/)**
-- **[Flutter](https://flutter.dev/)**
+Ok done. Thanks for reading!
 
-This allows comparing tooling, APIs, and the overall developer experience of the SDKs.
+## In all seriousness
 
-## Why
+Similarly to what @pkamppur describes, the promise of a better developer experience, but just on the web, brought me to Elm and pretty soon thereafter to Elm UI. I've somehow managed to avoid writing much frontend web stuff and learning it with increasing demands on my time from tiny fleshy daemons crawling onto my shoulders there is no light at the end of that particular tunnel, for the time being.
 
-I wanted to try these mobile SDKs that have a **declarative UI**, and see how it feels to create an app with each one of them. I was interested in diving deeper into the developer experience with these tools, languages and libraries.
+What https://elm-lang.org describes Elm having—"No runtime exceptions", "Fearless refactoring", "Understand anyone's code", "Fast and friendly feedback" (from the compiler)—is the general gist but what entices me in my surroundings is to have a concise collection of tools and concepts to wrangle something up to the web for customers to use (and keep using with no runtime errors, see "Fearless refactoring"), whilst working in a small team with sprawling demands, no less.
 
-**SwiftUI** is the new hotness for cross-platform UIs on Apple platforms. **Flutter** promises a single cross-platform codebase for mobile, desktop, and web. **React Native** is familiar to React developers and enables deployment to both iOS and Android.
+What Elm UI gives oneself is likewise a concise collection of elements (among others, _row_, _column_, _width fill_, _height shrink_, and in desperate times, a _moveLeft (px 2)_) to describe your UI in. The declaration of how an element should look is right there in the function call, not spookily actioning upon your element from a distant CSS file. The model-view-update loop of Elm, or [TEA](https://guide.elm-lang.org/architecture/index.html), will take care of the rest, where its _Promise_ (if you will in JS territory) is not a wriggly toad thrown into your lap which will either produce a diamond, or a poisonous turd which both might end up on the floor if your mind slips in the slime, but that toad is neatly placed in a box, atop another box, atop... where they all croak at you only when the runtime lets them and neither the diamond will cut your hand nor the turd poison you.
 
-I chose these SDKs because of their modern **declarative UI** and hopefully better developer experience than what I've been used to with UIKit and standard Android. I have a strong background in native iOS and Android, but I haven't done any large projects with these mobile app technologies.
+## Ok, in all seriousness
 
-I wanted to create a simple app with all these SDKs to learn them better and see what it's like to start a new project with these techs in 2020. What comes out of the box, how easy is it to set up a new project, what else is needed for a simple real world app?
+I'm talking about the _update_ method of Elm, where we handle the end-result of each _message_ we sent out to the runtime. 
 
-The aim is to create an app that looks and feels pretty much native. I've checked the apps on iOS, because SwiftUI is iOS-only, even though React Native and Flutter support cross-platform development. Looking at doing cross-platform (Android and iOS) would also be interesting, as would be learning [Jetpack Compose](https://developer.android.com/jetpack/compose).
-
-## What Is Declarative UI
-
-Declarative UI means I, as the programmer, declare how I want the UI to look, not how to build it. HTML is an example. Plain old HTML is just static. Declarative UIs start to shine, in my opinion, when things change and become dynamic. For example, in the old imperative way (UIKit), code has to keep references to view to update them. In declarative code, there's only the code that describes how the UI should look in each possible state. No more keeping track of views, no more multiple callbacks touching the same view and sometimes conflicting when timing is just right etc. Classes of problems just go away.
-
-Below is a good example. What UI is shown depends on the state of the app. If `games` have been loaded, they're shown. If not, show spinner. No more "remove this view when loading ends, and then add these to the table view, oh and add the table view as well". Also notice there's not much layout specified here. SwiftUI has nice defaults, so the most common thing is the default, and thus the code can be very short.
-
-```swift
-    var body: some View {
-        Group {
-            if let games = games {
-                LoadedGameList(games: games)
-            } else {
-                ProgressView()
-            }
+Upon navigating to the root, we tell in _init_ for the runtime to perform a
+```elm
+getGames : Cmd Msg
+getGames =
+    Http.get
+        { url = baseUrl ++ "/the-hotness"
+        , expect = Http.expectJson (RemoteData.fromResult >> GotGames) decodeHotness
         }
-    }
 ```
 
-So in short, UI is a function of the app state (in a mathematical sense). Read more about declarative UI from [Flutter documentation](https://flutter.dev/docs/get-started/flutter-for/declarative).
+Should it all succeed in the network, the _GotGames_ constructor function will be called with a _RemoteData_, which is
 
-## The App
-
-The app is pretty simple, but typical mobile app. It has a list view and a detail view. The app shows [BoardGameGeek's The Hotness list](https://boardgamegeek.com/), and allows user to view details of each board game. I tried to make app functionality and code organization as similar as possible in all the apps.
-
-Data is fetched from a custom proxy server sitting in front of [BGG XML Api 2](https://boardgamegeek.com/wiki/page/BGG_XML_API2). The server converts XML to JSON so the mobile app doesn't have to deal with XML.
-
-The app has these features:
-
-- Network requests
-- JSON parsing
-- List view
-- View/screen navigation
-- Image loading & scaling
-- Somewhat complex text layout
-
-Every complex mobile app has functionality like this, so I'm sampling a good portion of what it feels like to develop a real app with these technologies.
-
-### SwiftUI
-
-List View | Detail View
-:--------:|:-----------:
-<img src="Screenshots/swiftui-list.png" width="300"/> | <img src="Screenshots/swiftui-details.png" width="300"/>
-
-### React Native
-
-List View | Detail View
-:--------:|:-----------:
-<img src="Screenshots/reactnative-list.png" width="300"/> | <img src="Screenshots/reactnative-details.png" width="300"/>
-
-### Flutter
-
-List View | Detail View
-:--------:|:-----------:
-<img src="Screenshots/flutter-list.png" width="300"/> | <img src="Screenshots/flutter-details.png" width="300"/>
-
-
-## Prerequisites for Running The Apps
-
-You'll need to have these tools installed. I have the versions listed.
-
-- Xcode 12.0.1
-- Flutter 1.20.4
-- React Native 0.63.2
-- Node.js v13.14.0
-- npm 6.14.4
-- Docker v19.03.12 (for running the server)
-
-Please refer to the documentation of those tools on how to install them.
-
-## Running The Apps
-
-### Starting Server
-
-You need the server running before launching the mobile apps. Server is made with Node.js and is configured to run in Docker. You can also run it locally, but I don't have instructions or configuration for that.
-
-```
-cd Server
-docker build -t mobile-server-2020 .
-docker run -e DEBUG=1 -e PORT=6000 -p 38651:6000 -d mobile-server-2020
+```elm
+type RemoteData e a
+    = NotAsked
+    | Loading
+    | Failure e
+    | Success a
 ```
 
-### Running SwiftUI App
+With Elm you can easily model your application around these rich types instead of having a null, empty list, an error of some type perhaps all in one dynamic variable which you try to not trip over.
 
-Open `SwiftUI/TheHotnessSwiftUI.xcodeproj` and run the project (Cmd-R).
+With that RemoteData having been placed into our model in _update_, _view_ is called and from there we case over the RemoteData in _gameListView_, where the UI starts to take form
 
-### Running React Native App
+```elm
+    case wlg of
+        Success games ->
+            container (List.indexedMap (\i -> \g -> gameCell g (i == List.length games - 1) m.detailPushed) games)
 
-```
-cd ReactNative
-npm install
-npx pod-install
-npx react-native run-ios
-npx react-native start
-```
+        Failure e ->
+            container [ el [] (text "Failure") ]
 
-### Running Flutter App
+        Loading ->
+            container [ el [] (text "Loading") ]
 
-Launch iPhone Simulator.
-
-```
-cd Flutter
-flutter run
+        NotAsked ->
+            container [ el [] (text "Kissat koiria sflsfalöfsakflö") ]
 ```
 
-# My Impressions
+And produce a list view, where each gameCell is
 
-Overall I found all of these SDKs to be easy to set up and use to create the sample app. I think all of them were equally easy to create this app.
+```elm
+gameCell : Game -> Bool -> Element Msg
+gameCell g isLast =
+    let
+        cellH =
+            46
 
-Using UI toolkit which uses a declarative UI feels really great. All SDKs have a great story there. Building the app and UI was pretty fast, a few hours per app. Once I had everything for the list view, building the detail view was fast.
+        dividerH =
+            1
 
-Composability was great with all the SDKs. It was easy first build the UI as one big blob and then split it up for easier understandability and any possible reuse. This is much better than `UIViewController` or `Activity`/`Fragment` composition.
+        contentH =
+            cellH - dividerH * 2
 
-All SDKs had their own quirks with regards to how to get the layout to what I wanted. With experience I would think they're all capable, fast and easy to use.
+        dividerTop =
+            row [ width fill, height (px 1), BG.color (rgba 0 0 0 0.2) ] []
 
-I think I like SwiftUI the most: good defaults and nice syntax means there's not much to code write, and view modifiers are a nice way of tuning layout. Modifiers also apply to whole subtrees, which may be handy sometimes. The language (Swift) has nice features and I feel SwiftUI is a good library, albeit it seems to be somewhat deep and complex when looking at everything it offers. I mean, complex animations etc. seem to be possible, looking at examples on the Internet, but they don't seem to be so easy to write, for a novice. Simple things are mostly simple, however. Apps feel very native, but SwiftUI doesn't work on Android, so there's that.
+        dividerBottom =
+            if isLast then
+                row [ width fill, height (px 1), BG.color (rgba 0 0 0 0.2) ] []
 
-Overall developer experience was best with React Native. Hot reload worked great and made development fast and fun, app looked ok (out of the box), code for layout structure wasn't too verbose, and styling & tuning look and layout was clean and easy to do with `StyleSheet`. TypeScript feels a nice, clean and modern language. React Native's API feels clean and simple.
-
-Unfortunately Flutter wasn't that impressive to me. It's developer experience didn't feel better in any area than either of the other choices. Hot reload was much better than SwiftUI's, but not better than React Native's. Language and library weren't as good IMO. Overall Flutter seems good, but it just doesn't excite me at all. The two other SDKs feel interesting, but this is a very personal opinion.
-
-I've included a sample view for each language below. It's the row view used to display a single game in the list. SwiftUI has the shortest code.
-
-The technologies have their strengths and weaknesses, mostly relating to supporting (or not supporting) multiple platforms (with varying levels of grace). Also getting little details just right for each platform will be more difficult the further away the SDK is from the platform conceptually. So the question becomes, what kind of an app are you building?
-
-## SwiftUI
-
-```swift
-struct GameRow: View {
-    let game: Game
-    
-    var body: some View {
-        HStack {
-            RoundedThumbnail(url: game.thumbnailUrl)
-            VStack(alignment: .leading) {
-                Text(game.name)
-                Text(game.yearPublished)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding(.trailing)
-        }
-    }
-}
+            else
+                Element.none
+    in
+    wrappedRow [ width fill, height (pt cellH), Events.onMouseUp (TappedGame g) ]
+        [ column [ width fill, height (pt cellH) ]
+            [ row [ width fill, height (px dividerH) ]
+                [ dividerTop ]
+            , row [ width fill, height (pt contentH) ]
+                [ column [ width (fillPortion 2), height (pt contentH), Font.center, clip ]
+                    [ image [ centerX, centerY, width (pt <| contentH - 4), height (pt <| contentH - 4), moveLeft 3, moveDown 2, Border.width 0, Border.rounded (siz 4), clip ]
+                        { src = g.thumbnailUrl, description = "Logo of " ++ g.name } ]
+                , column [ width (fillPortion 5), height (pt contentH) ]
+                    [ el [ centerY ] <|
+                        column [ paddingXY 10 0 ]
+                            [ row (fontWithSize 9 ++ [ Font.alignLeft, width shrink, height shrink ])
+                                [ paragraph [] [ text g.name ] ]
+                            , row (fontWithSize 6 ++ [ Font.alignLeft, Font.color <| rgba 0 0 0 0.4, width shrink, height shrink, paddingEach { top = 2, left = 0, bottom = 0, right = 0 } ])
+                                [ text g.yearPublished ]
+                            ]
+                    ]
+                , column [ width (fillPortion 1), height (pt contentH) ]
+                    [ text "" ]
+                ]
+            , row [ width fill, height (pt contentH) ]
+                [ dividerBottom ]
+            ]
+        ]
 ```
 
-#### Good
+#### A sidenote
 
-- 👍 The future of native iOS.
-- 👍 First class citizen on iOS.
-- 👍 Fully native UI with platform look & feel (on iOS).
-- 👍 Code looks pretty clean with minimal boilerplate. Perhaps has the best defaults for layout code.
-- 👍 Usable on all Apple platforms.
-- 👍 Doesn't bloat the app with tons of library code.
+For people lucky to have been familiarized with endless brackets with Objective-C the expressions inside expressions (`(())`) might not cause that much dizziness, but you can use the pipe operators `|>` and `<|` to make the code flow more nicely. Borrowing an example from _Practical Elm for a busy developer_, by Alex Korban (https://korban.net/elm/book/):
 
-#### Could be better
-
-- 👎 Requires iOS 13 (or debatably 14).
-- 👎 Is still very much under development, unfinished in terms of how much of overall iOS SDKs support it.
-- 👎 Hot reload is not quite at the level of Flutter and React Native.
-- 👎 No Android or web.
-- 👎 Project template doesn't include a `.gitignore` file. Easy to find on the web, but why not include by default?
-- 👎 Documentation isn't quite there yet, though Apple has nice [sample projects](https://developer.apple.com/documentation/app_clips/fruta_building_a_feature-rich_app_with_swiftui) and [WWDC videos](https://developer.apple.com/videos/) are great.
-- 👎 Layout has good defaults, but some things seem harder to grok. For example, getting the detail view image to fit width with maximum height was hard. By default `.frame(maxHeight: 300)` means the image will always be 300 points high. I had to add `fixedSize(horizontal: false, vertical: true)` after `maxHeight` to make the image view shrink in height when it wasn't over 300 points high. Why? I don't still really understand. Other SDKs seemed to be easier to understand with regards to their layout model.
-- 👎 State management is, well, somewhat complicated. `@State`, `@StateObject`, @ObservableObject` etc. The engineer in me appreciates all of these and what they do, but all these things bring complexity developers do have to deal with. Probably this all stems from Swift's value and reference semantics and their differences. I really love value semantics, but they seem to complicate things in SwiftUI.
-
-## React Native
-
-```typescript
-export const GameRow = ({game}: {game: Game}) => {
-  return (
-    <View style={styles.gameRow}>
-      <Image style={styles.thumbnail} source={{uri: game.thumbnailUrl}} />
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{game.name}</Text>
-        <Text style={styles.yearPublished}>{game.yearPublished}</Text>
-      </View>
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  gameRow: {
-    backgroundColor: Colors.white,
-    padding: 10,
-    flex: 1,
-    flexDirection: 'row',
-  },
-  textContainer: {
-    padding: 10,
-    flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'center',
-  },
-  thumbnail: {
-    width: 80,
-    height: 80,
-    resizeMode: 'cover',
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  title: {
-    fontSize: 18,
-  },
-  yearPublished: {
-    marginTop: 1,
-    fontSize: 14,
-    color: '#999',
-  },
-});
+```elm
+text 
+    <| toString 
+    <| List.filter canAddUsers 
+    <| getActiveUsers projectId users
 ```
-#### Good
-
-- 👍 Very pleasant development experience.
-- 👍 Clean API.
-- 👍 Big community (lots of documentation, blogs, StackOverflow answers etc.).
-- 👍 Documentation. Hooks documentation, for example, is just superb.
-- 👍 Pretty clean layout code, separate styles (`StyleSheet.create()`) are a plus and a minus. I can't see the style inline with layout structure, but on the other hand the style is reusable.
-
-#### Could be better
-
-- 👎 Doesn't feel like a really cohesive whole.
-- 👎 Need to know which libraries are the best for each use case to get all the things one needs in an app.
-- 👎 TypeScript is great, but there are still hairy things from JS (equality comparison for example).
-- 👎 Platform look & feel polish is not there, out of the box. I bet there are libraries to help with that.
-
-## Flutter
-
-```dart
-class GameListRow extends StatelessWidget {
-  GameListRow({Key key, this.game}) : super(key: key);
-
-  final Game game;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      child: Row(children: [
-        ThumbnailView(thumbnailUrl: game.thumbnailUrl),
-        Flexible(
-            child: Container(
-                margin: const EdgeInsets.only(left: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${game.name}',
-                        style: Theme.of(context).textTheme.headline6),
-                    Text('${game.yearPublished}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyText2
-                            .apply(color: Colors.grey))
-                  ],
-                )))
-      ]),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(width: 1.0, color: Colors.grey.shade300),
-        ),
-        color: Colors.transparent,
-      ),
-    );
-  }
-}
+vs.
+```elm
+users 
+    |> getActiveUsers projectId 
+    |> List.filter canAddUsers
+    |> toString
+    |> text
 ```
 
-#### Good
+where the first example is equivalent to _this_...
+```elm
+(text (toString (List.filter canAddUsers (getActiveUsers projectId users))))
+```
 
-- 👍 Dart is easy to learn. It's a non-surprising language, which is a good thing.
-- 👍 Probably closest to true cross-platfrom from one codebase.
-- 👍 Feels more like a cohesive whole than React Native.
+#### Continuing on
 
-#### Could be better
+Touch-upping on a `gameCell` gets us to `TappedGame g` message, details fethed and the subsequent call to `detailPage`, where I cheated and used a very usable 0.2 version of https://github.com/passiomatic/elm-designer, which resembles something out of Xcode's Interface Builder innards and produces elm-ui code. If feeling like your brain could use a rest, wire the frames of the UI out with it and hash out the details later.
 
-- 👎 Flutter view APIs are a bit verbose. Maybe I just don't know all the tricks yet. With easy composition I could possily create my own API on top of the Flutter components to make building UIs a bit less verbose.
-- 👎 Dart syntax feels a bit dated. Easy to learn, like Go, but I feel language design has evolved, and modern Swift or TypeScript is years ahead of Dart. Null safety isn't on par for 2020 IMO. Seems it's coming, but it's still a tech preview.
-- 👎 There's a lot of boilerplate. JSON parsing, for example, is very tedious to write. This seems to be by design.
-- 👎 Community feels much smaller than React Native or SwiftUI.
-- 👎 Doesn't look like an iOS app straight from the box. Seems there are platform-specific themes, but I didn't look into those. On the other hand, real cross-platform support means the app probably just can't be very platform-specific in its look & feel.
-- 👎 Overall very *meh* for me. App doesn't look like an iOS app, or even good, Dart feels a bit dated, Flutter view APIs feel verbose to use.
+#### Escaping into CSS
 
-# More Complex Things to Try
+What a sharp-eyed code reader might notice is the `htmlImg url maxw maxh = ...` function. I couldn't find a way to scale the image as I needed with elm-ui, so I had to escape into CSS, which is straightforward.  
 
-Adding more things could really stress these SDKs to see how easy they are for making polished mobile apps:
+#### Tooling
 
-- Proper error handling & retries for networking
-- Polished platform UI look & feel
-- Animations
-- Text editing
-- Image scaling and display
-- Pull to refresh
-- Complex navigation structure
-- Video player
-- Embedded web content
-- Complex gesture interactions
-- Rich, editable model on the client
-- Biometric authentication
-- Unit tests
-- UI tests
-- Push notifications
-- etc.
+How is this all set up?
 
-It's the little platform look & feel things that take a lot of time to create. Cross-platform toolkits usually make it harder to get all the details right.
+- download the installer from https://guide.elm-lang.org/install/elm.html
+- initialize the project while in `mobile-sdk-comparison-2020/Elm`
+```shell
+elm init
+```
 
-Implementing these things would increase my knowledge in the SDKs and how to create full-featured, rich and polished apps with them.
+- install elm-ui, remotedata and other packages:
+```shell
+for pkg in elm/url elm/json elm/http mdgriffith/elm-ui krisajenkins/remotedata NoRedInk/elm-json-decode-pipeline; do elm install $pkg; done
+```
 
-## Send Feedback
+- install a helpful local development server with hot reloading and time traveling debugger:
+```
+npm install -g elm-live
+```
 
-I'd like to hear your comments, improvement ideas, and other feedback. You can use [GitHub Issues](https://github.com/pkamppur/mobile-sdk-comparison-2020/issues) to suggest improvements. I can also be reached on Twitter: [@pkamppur](https://twitter.com/pkamppur).
+- run the thing and navigate to http://localhost:8000:
+```shell
+elm-live -- src/Main.elm --debug
+```
 
+All available packages for Elm are found at https://package.elm-lang.org or a catalogued collection through here https://korban.net/elm/catalog/
+
+Elm plugins are available for VSCode and IntelliJ IDEA among others and `elm-format`, available also via npm, will keep your code neat and uniform with the One True Style as `go fmt` does with Golang sources.
+
+## In conclusion
+
+Have kids? Try Elm UI.
+
+Elm has a superb Slack community discoverable through https://elm-lang.org/community. I don't think a question on #beginners has gone unanswered without great care while I've been there. Also check out #elm-ui obviously and #misc for general software development discussions.
+
+Links:
+
+- Elm Radio episode on Elm UI: https://elm-radio.com/episode/elm-ui/
+- a collection of patterns: https://korban.net/elm/elm-ui-patterns/ 
